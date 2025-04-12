@@ -1,12 +1,12 @@
-import os
-import hashlib
-import shutil
-import signal
-import sys
-import logging
-import mimetypes
-import pickle
-from tqdm import tqdm
+import os  # Added for file and directory operations
+import hashlib  # Added for hashing files
+import shutil  # Added for file copying and moving
+import signal  # Added for handling interrupts
+import sys  # Added for system-specific parameters and functions
+import logging  # Added for logging
+import mimetypes  # Added for MIME type detection
+import pickle  # Added for serialization and deserialization of objects
+from tqdm import tqdm  # Added for progress bar
 import argparse  # Added for dynamic file type support
 import sqlite3  # Added for database support
 
@@ -18,6 +18,13 @@ OUTPUT_DIR = os.path.join(ROOT_DIR, "ImageScanTest")  # Output directory on the 
 UNIQUE_DIR = os.path.join(OUTPUT_DIR, "UniqueFiles")
 DUPLICATE_DIR = os.path.join(OUTPUT_DIR, "DuplicateFiles")
 
+
+# Check if root directory exists
+if not os.path.exists(ROOT_DIR):
+    print(f"Error: Root directory '{ROOT_DIR}' does not exist.")
+    sys.exit(1)
+
+
 # Logging configuration
 logging.basicConfig(
     filename="file_scan.log",
@@ -25,45 +32,22 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+
 # Declarations
 CHUNK_SIZE = 65536  # 64KB
 SAVE_INTERVAL = 10  # Save progress every 10 files
 
+
 # Default file types to include (can be overridden by user input)
 DEFAULT_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
 
-# Check if root directory exists
-if not os.path.exists(ROOT_DIR):
-    print(f"Error: Root directory '{ROOT_DIR}' does not exist.")
-    sys.exit(1)
 
 # Create output folders if they don't exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(UNIQUE_DIR, exist_ok=True)
 os.makedirs(DUPLICATE_DIR, exist_ok=True)
 
-# This function checks if the drive has enough free space for the operation.
-def check_disk_space(path, required_space):
-    """
-    Checks if the drive at the given path has at least the required space.
 
-    Args:
-        path (str): The path on the drive to check.
-        required_space (int): The minimum required free space in bytes.
-
-    Returns:
-        bool: True if there is enough free space, False otherwise.
-    """
-    total, used, free = shutil.disk_usage(path)
-    return free >= required_space
-
-# Check disk space before starting the scan
-if not check_disk_space(OUTPUT_DIR, 100 * 1024 * 1024):  # 100MB threshold
-    print("Insufficient disk space on the output drive.")
-    sys.exit(1)
-
-# Function to parse command-line arguments
-# This function allows the user to specify file types and directories dynamically.
 def parse_arguments():
     """
     Parses command-line arguments for dynamic file type support.
@@ -96,6 +80,28 @@ def parse_arguments():
     return parser.parse_args()
 
 
+# This function checks if the drive has enough free space for the operation.
+def check_disk_space(path, required_space):
+    """
+    Checks if the drive at the given path has at least the required space.
+
+    Args:
+        path (str): The path on the drive to check.
+        required_space (int): The minimum required free space in bytes.
+
+    Returns:
+        bool: True if there is enough free space, False otherwise.
+    """
+    total, used, free = shutil.disk_usage(path)
+    return free >= required_space
+
+
+# Check disk space before starting the scan
+if not check_disk_space(OUTPUT_DIR, 100 * 1024 * 1024):  # 100MB threshold
+    print("Insufficient disk space on the output drive.")
+    sys.exit(1)
+
+
 def hash_file(filepath, chunk_size=CHUNK_SIZE):
     """
     Generates a SHA-256 hash for the given file.
@@ -118,7 +124,7 @@ def hash_file(filepath, chunk_size=CHUNK_SIZE):
         logging.error(f"Error hashing {filepath}: {e}")
         return None
 
-# This function checks if the file is valid based on its extension or MIME type.
+
 def is_valid_file(filename, extensions):
     """
     Checks if a file is valid based on its extension or MIME type.
@@ -138,8 +144,7 @@ def is_valid_file(filename, extensions):
     mime_type, _ = mimetypes.guess_type(filename)
     return mime_type and any(mime_type.endswith(ext.strip(".")) for ext in extensions)
 
-# This function copies files to the destination directory, ensuring no filename conflicts.
-# It checks if the file already exists in the destination directory by comparing its hash.
+
 def safe_copy(src, dest_dir, hashes):
     """
     Copies a file to the destination directory, ensuring no filename conflicts.
@@ -183,6 +188,7 @@ def safe_copy(src, dest_dir, hashes):
     except Exception as e:
         logging.error(f"Error copying {src} to {dest_path}: {e}")
         print(f"Error copying {src} to {dest_path}: {e}")
+
 
 def scan_and_copy_files(root_dir, extensions):
     """
@@ -260,8 +266,7 @@ def scan_and_copy_files(root_dir, extensions):
     conn.close()  # Close the database connection
     return processed_files, skipped_files
 
-# This function compares two files byte by byte to determine if they are identical.
-# It is used to check for hash collisions where two different files have the same hash.
+
 def files_are_identical(file1, file2):
     """
     Compares two files byte by byte to determine if they are identical.
@@ -286,27 +291,44 @@ def files_are_identical(file1, file2):
         logging.error(f"Error comparing {file1} and {file2}: {e}")
         return False
 
-# This function handles the interrupt signal (Ctrl+C) to save progress and exit gracefully.
-# Saves the current state of hashes to a file using pickle.
+
 def save_progress(hashes, filename="hashes.pkl"):
+    """
+    Saves the current state of hashes to a file using pickle.
+    """
     try:
         with open(filename, "wb") as f:
             pickle.dump(hashes, f)
     except Exception as e:
         logging.error(f"Error saving progress to {filename}: {e}")
 
-# This function handles the interrupt signal (Ctrl+C) to save progress and exit gracefully.
-# It uses a factory pattern to capture the current state of hashes.
+
 def handle_interrupt_factory(hashes):
+    """
+    Creates a signal handler for graceful exit on interrupt.
+    """
     def handle_interrupt(signal, frame):
         print("\nScript interrupted. Saving progress and exiting gracefully...")
         save_progress(hashes)
         sys.exit(0)
     return handle_interrupt
 
-# This function loads the progress from a file if it exists.
-# It uses pickle to deserialize the hashes dictionary.
+
 def load_progress(filename="hashes.pkl"):
+    """
+    Load progress data from a pickle file.
+
+    This function attempts to load a dictionary of progress data from the specified
+    pickle file. If the file does not exist or an error occurs during loading, 
+    an empty dictionary is returned.
+
+    Args:
+        filename (str): The name of the pickle file to load. Defaults to "hashes.pkl".
+
+    Returns:
+        dict: The loaded progress data as a dictionary, or an empty dictionary if
+              the file does not exist or an error occurs.
+    """
     try:
         if os.path.exists(filename):
             with open(filename, "rb") as f:
@@ -315,12 +337,20 @@ def load_progress(filename="hashes.pkl"):
         logging.error(f"Error loading progress from {filename}: {e}")
     return {}
 
-# Note: The progress bar dynamically adjusts its total when files are skipped.
-# This may cause the progress bar to "jump" slightly during execution.
 
-# This function initializes the SQLite database for storing hashes and file paths.
-# It creates the database file if it doesn't exist and sets up the table structure.
 def initialize_database(db_path="hashes.db"):
+    """
+    Initializes a SQLite database to store file hashes and their corresponding file paths.
+
+    Args:
+        db_path (str): The path to the SQLite database file. Defaults to "hashes.db".
+
+    Returns:
+        sqlite3.Connection: A connection object to the initialized SQLite database.
+
+    Raises:
+        SystemExit: If an SQLite error occurs during initialization, the program logs the error and exits.
+    """
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -331,20 +361,44 @@ def initialize_database(db_path="hashes.db"):
         logging.error(f"Error initializing database: {e}")
         sys.exit(1)
 
-# This function saves the hash and file path to the database.
-# It uses SQLite to store the hashes and file paths for later retrieval.
+
 def save_hash_to_db(conn, hash_value, filepath, batch_mode=False):
+    """
+    Saves a hash value and its associated file path to the database.
+
+    This function inserts a hash value and its corresponding file path into the
+    `hashes` table of the database. If the `batch_mode` parameter is set to False,
+    the changes are committed immediately. Otherwise, the commit is deferred,
+    allowing for batch processing.
+
+    Args:
+        conn (sqlite3.Connection): The database connection object.
+        hash_value (str): The hash value to be stored.
+        filepath (str): The file path associated with the hash value.
+        batch_mode (bool, optional): If True, defers committing the transaction.
+                                     Defaults to False.
+
+    """
     cursor = conn.cursor()
     cursor.execute("INSERT OR IGNORE INTO hashes (hash, filepath) VALUES (?, ?)", (hash_value, filepath))
     if not batch_mode:
         conn.commit()
 
-# This function loads hashes from the database into a dictionary.
-# It is used to check for duplicates during the scan.
+
 def load_hashes_from_db(conn):
+    """
+    Loads file hashes and their corresponding file paths from the database.
+
+    Args:
+        conn (sqlite3.Connection): A connection object to the SQLite database.
+
+    Returns:
+        dict: A dictionary where the keys are file hashes (str) and the values are file paths (str).
+    """
     cursor = conn.cursor()
     cursor.execute("SELECT hash, filepath FROM hashes")
     return dict(cursor.fetchall())
+
 
 if __name__ == "__main__":
     # Parse command-line arguments
