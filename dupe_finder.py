@@ -13,7 +13,7 @@ import sqlite3  # Added for database support
 
 
 # Folder paths
-ROOT_DIR = "F:/"  # Root directory to scan
+ROOT_DIR = "E:/"  # Root directory to scan
 OUTPUT_DIR = os.path.join(ROOT_DIR, "ImageScanTest")  # Output directory on the same drive
 UNIQUE_DIR = os.path.join(OUTPUT_DIR, "UniqueFiles")
 DUPLICATE_DIR = os.path.join(OUTPUT_DIR, "DuplicateFiles")
