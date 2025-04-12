@@ -40,6 +40,16 @@ SAVE_INTERVAL = 10  # Save progress every 10 files
 
 # Default file types to include (can be overridden by user input)
 DEFAULT_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
+# DEFAULT_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg", ".lrv", ".thm"}
+# DEFAULT_FILE_EXTENSIONS = {".txt", ".log", ".md", ".csv", ".json", ".xml", ".html", ".css", ".js"}
+# DEFAULT_FILE_EXTENSIONS = {".doc", ".docx", ".pdf", ".ppt", ".pptx", ".xls", ".xlsx"}
+# DEFAULT_FILE_EXTENSIONS = {".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z"}
+# DEFAULT_FILE_EXTENSIONS = {".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma"}
+# DEFAULT_FILE_EXTENSIONS = {".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".img"}
+# DEFAULT_FILE_EXTENSIONS = {".py", ".java", ".c", ".cpp", ".h", ".cs", ".go", ".rb"}
+# DEFAULT_FILE_EXTENSIONS = {".svg", ".ai", ".eps", ".psd", ".indd", ".xd", ".fig"}
+# DEFAULT_FILE_EXTENSIONS = {".ttf", ".otf", ".woff", ".woff2", ".eot", ".svgz"}
+
 
 
 # Create output folders if they don't exist
