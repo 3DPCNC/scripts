@@ -125,16 +125,16 @@ python dupe_finder.py --dry-run
 
 ### **1. File Validation**
 
-The script validates files based on their extensions and MIME types:
+- The script validates files based on their extensions and MIME types:
 
-```python
-def is_valid_file(filename, extensions):
-    ext = os.path.splitext(filename.lower())[1]
-    if ext in extensions:
-        return True
-    mime_type, _ = mimetypes.guess_type(filename)
-    return mime_type and any(mime_type.endswith(ext.strip(".")) for ext in extensions)
-```
+  ```python
+  def is_valid_file(filename, extensions):
+      ext = os.path.splitext(filename.lower())[1]
+      if ext in extensions:
+          return True
+      mime_type, _ = mimetypes.guess_type(filename)
+      return mime_type and any(mime_type.endswith(ext.strip(".")) for ext in extensions)
+  ```
 
 ### **2. Duplicate Detection**
 
@@ -258,6 +258,7 @@ def is_valid_file(filename, extensions):
 1. Add support for multi-threaded file processing to improve performance.
 2. Implement a configuration file for easier customization.
 3. Add support for excluding specific subdirectories.
+4. Create a UI
 
 ---
 
