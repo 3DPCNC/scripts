@@ -13,7 +13,7 @@ import sqlite3  # Added for database support
 
 
 # Folder paths
-ROOT_DIR = "E:/"  # Root directory to scan
+ROOT_DIR = "F:/"  # Root directory to scan
 OUTPUT_DIR = os.path.join(ROOT_DIR, "FileScanTest")  # Output directory on the same drive
 UNIQUE_DIR = os.path.join(OUTPUT_DIR, "UniqueFiles")
 DUPLICATE_DIR = os.path.join(OUTPUT_DIR, "DuplicateFiles")
@@ -34,13 +34,16 @@ logging.basicConfig(
 
 
 # Declarations
-CHUNK_SIZE = 65536  # 64KB
+# CHUNK_SIZE = 65536  # 64KB
+CHUNK_SIZE = 1024 * 1024  # 1MB
+# CHUNK_SIZE = 1024 * 1024 * 10  # 10MB
+# CHUNK_SIZE = 1024 * 1024 * 100  # 100MB
 SAVE_INTERVAL = 10  # Save progress every 10 files
 
 
 # Default file types to include (can be overridden by user input)
-DEFAULT_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
-# DEFAULT_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg", ".lrv", ".thm"}
+# DEFAULT_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
+DEFAULT_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg", ".lrv", ".thm"}
 # DEFAULT_FILE_EXTENSIONS = {".txt", ".log", ".md", ".csv", ".json", ".xml", ".html", ".css", ".js"}
 # DEFAULT_FILE_EXTENSIONS = {".doc", ".docx", ".pdf", ".ppt", ".pptx", ".xls", ".xlsx"}
 # DEFAULT_FILE_EXTENSIONS = {".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z"}
@@ -49,7 +52,7 @@ DEFAULT_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".w
 # DEFAULT_FILE_EXTENSIONS = {".py", ".java", ".c", ".cpp", ".h", ".cs", ".go", ".rb"}
 # DEFAULT_FILE_EXTENSIONS = {".svg", ".ai", ".eps", ".psd", ".indd", ".xd", ".fig"}
 # DEFAULT_FILE_EXTENSIONS = {".ttf", ".otf", ".woff", ".woff2", ".eot", ".svgz"}
-
+# DEFAULT_FILE_EXTENSIONS = {".yaml", ".yml", ".ini", ".cfg"}
 
 
 # Create output folders if they don't exist
