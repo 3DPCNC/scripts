@@ -14,7 +14,7 @@ import sqlite3  # Added for database support
 
 # Folder paths
 ROOT_DIR = "E:/"  # Root directory to scan
-OUTPUT_DIR = os.path.join(ROOT_DIR, "ImageScanTest")  # Output directory on the same drive
+OUTPUT_DIR = os.path.join(ROOT_DIR, "FileScanTest")  # Output directory on the same drive
 UNIQUE_DIR = os.path.join(OUTPUT_DIR, "UniqueFiles")
 DUPLICATE_DIR = os.path.join(OUTPUT_DIR, "DuplicateFiles")
 
@@ -80,7 +80,7 @@ def parse_arguments():
     parser.add_argument(
         "--output-dir",
         default=OUTPUT_DIR,
-        help="Output directory for unique and duplicate files. Default is D:/ImageScanTest."
+        help="Output directory for unique and duplicate files. Default is D:/FileScanTest."
     )
     parser.add_argument(
         "--dry-run",
