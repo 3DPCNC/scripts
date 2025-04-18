@@ -174,15 +174,16 @@ def is_valid_file(filename, extensions):
     return mime_type and any(mime_type.endswith(ext.strip(".")) for ext in extensions)
 
 
-def safe_copy(src, dest_dir, hashes):
+def safe_copy(src, dest_dir, hashes, delete_original=False):
     """
     Copies a file to the destination directory, ensuring no filename conflicts.
-    Checks if the file already exists in the destination directory by comparing its hash.
+    Optionally deletes the original file after copying.
 
     Args:
         src (str): Path to the source file.
         dest_dir (str): Path to the destination directory.
         hashes (dict): Dictionary of hashes to file paths.
+        delete_original (bool): Whether to delete the original file after copying.
     """
     base = os.path.basename(src)
     dest_path = os.path.join(dest_dir, base)
@@ -214,6 +215,9 @@ def safe_copy(src, dest_dir, hashes):
     
     try:
         shutil.copy2(src, dest_path)
+        if delete_original:
+            os.remove(src)
+            logging.info(f"Deleted original file: {src}")
     except Exception as e:
         logging.error(f"Error copying {src} to {dest_path}: {e}")
         print(f"Error copying {src} to {dest_path}: {e}")
@@ -429,6 +433,67 @@ def load_hashes_from_db(conn):
     return dict(cursor.fetchall())
 
 
+def organize_unique_files_by_type(unique_dir):
+    """
+    Organizes files in the UniqueFiles directory into subdirectories by file type.
+
+    Args:
+        unique_dir (str): Path to the UniqueFiles directory.
+    """
+    for filename in os.listdir(unique_dir):
+        file_path = os.path.join(unique_dir, filename)
+        if os.path.isfile(file_path):
+            ext = os.path.splitext(filename)[1].lower()
+            if ext:  # Skip files without extensions
+                type_dir = os.path.join(unique_dir, ext[1:])  # Remove the dot from the extension
+                os.makedirs(type_dir, exist_ok=True)
+                shutil.move(file_path, os.path.join(type_dir, filename))
+                logging.info(f"Moved {filename} to {type_dir}")
+
+
+def organize_unique_files_by_group(unique_dir):
+    """
+    Organizes files in the UniqueFiles directory into subdirectories by file type groups.
+
+    Args:
+        unique_dir (str): Path to the UniqueFiles directory.
+    """
+    # Define file type groups
+    file_type_groups = {
+        "Documents": {".txt", ".log", ".md", ".csv", ".json", ".xml", ".html", ".css", ".js",
+                      ".doc", ".docx", ".pdf", ".ppt", ".pptx", ".xls", ".xlsx"},
+        "Images": {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"},
+        "Audio": {".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma"},
+        "Videos": {".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg"},
+        "Archives": {".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z"},
+        "Executables": {".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".img"},
+        "Code": {".py", ".java", ".c", ".cpp", ".h", ".cs", ".go", ".rb"},
+        "Fonts": {".ttf", ".otf", ".woff", ".woff2", ".eot", ".svgz"},
+        "Other": set()  # Catch-all for files that don't match any group
+    }
+
+    # Iterate over files in the UniqueFiles directory
+    for filename in os.listdir(unique_dir):
+        file_path = os.path.join(unique_dir, filename)
+        if os.path.isfile(file_path):
+            ext = os.path.splitext(filename)[1].lower()
+            group = "Other"  # Default group
+
+            # Find the group for the file extension
+            for group_name, extensions in file_type_groups.items():
+                if ext in extensions:
+                    group = group_name
+                    break
+
+            # Create the group directory if it doesn't exist
+            group_dir = os.path.join(unique_dir, group)
+            os.makedirs(group_dir, exist_ok=True)
+
+            # Move the file into the group directory
+            shutil.move(file_path, os.path.join(group_dir, filename))
+            logging.info(f"Moved {filename} to {group_dir}")
+
+
 if __name__ == "__main__":
     # Parse command-line arguments
     args = parse_arguments()
@@ -457,6 +522,10 @@ if __name__ == "__main__":
     # Start the scan
     print("Starting scan...")
     processed_files, skipped_files = scan_and_copy_files(ROOT_DIR, FILE_EXTENSIONS)
+
+    # Organize the UniqueFiles folder by file type groups
+    organize_unique_files_by_group(UNIQUE_DIR)
+
     print("Scan complete.")
     print(f"Total files processed: {processed_files}")
     print(f"Unique files copied to: {UNIQUE_DIR}")
