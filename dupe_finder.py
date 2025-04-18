@@ -43,7 +43,7 @@ SAVE_INTERVAL = 10  # Save progress every 10 files
 
 # Default file types to include (can be overridden by user input)
 # DEFAULT_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
-DEFAULT_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg", ".lrv", ".thm"}
+# DEFAULT_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg", ".lrv", ".thm"}
 # DEFAULT_FILE_EXTENSIONS = {".txt", ".log", ".md", ".csv", ".json", ".xml", ".html", ".css", ".js"}
 # DEFAULT_FILE_EXTENSIONS = {".doc", ".docx", ".pdf", ".ppt", ".pptx", ".xls", ".xlsx"}
 # DEFAULT_FILE_EXTENSIONS = {".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z"}
@@ -53,12 +53,28 @@ DEFAULT_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg
 # DEFAULT_FILE_EXTENSIONS = {".svg", ".ai", ".eps", ".psd", ".indd", ".xd", ".fig"}
 # DEFAULT_FILE_EXTENSIONS = {".ttf", ".otf", ".woff", ".woff2", ".eot", ".svgz"}
 # DEFAULT_FILE_EXTENSIONS = {".yaml", ".yml", ".ini", ".cfg"}
-
+DEFAULT_FILE_EXTENSIONS = {#".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp",
+                        #".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg",
+                        ".txt", ".log", ".md", ".csv", ".json", ".xml", ".html", ".css",
+                        ".js", ".doc", ".docx", ".pdf", ".ppt", ".pptx", ".xls", ".xlsx",
+                        ".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z",
+                        ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma",
+                        ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".img",
+                        ".py", ".java", ".c", ".cpp", ".h", ".cs", ".go", ".rb"
+                        }  # Default file types to include
 
 # Create output folders if they don't exist
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(UNIQUE_DIR, exist_ok=True)
-os.makedirs(DUPLICATE_DIR, exist_ok=True)
+if not os.path.exists(UNIQUE_DIR):
+    os.makedirs(UNIQUE_DIR)
+    logging.info(f"Created directory: {UNIQUE_DIR}")
+else:
+    logging.info(f"Using existing directory: {UNIQUE_DIR}")
+
+if not os.path.exists(DUPLICATE_DIR):
+    os.makedirs(DUPLICATE_DIR)
+    logging.info(f"Created directory: {DUPLICATE_DIR}")
+else:
+    logging.info(f"Using existing directory: {DUPLICATE_DIR}")
 
 
 def parse_arguments():
