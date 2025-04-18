@@ -13,7 +13,7 @@ import sqlite3  # Added for database support
 
 
 # Folder paths
-ROOT_DIR = "F:/"  # Root directory to scan
+ROOT_DIR = r"C:\Users\chris\Documents\Duplicate_Finder\scripts\TestRoot"  # Root directory to scan
 OUTPUT_DIR = os.path.join(ROOT_DIR, "FileScanTest")  # Output directory on the same drive
 UNIQUE_DIR = os.path.join(OUTPUT_DIR, "UniqueFiles")
 DUPLICATE_DIR = os.path.join(OUTPUT_DIR, "DuplicateFiles")
@@ -27,8 +27,8 @@ if not os.path.exists(ROOT_DIR):
 
 # Logging configuration
 logging.basicConfig(
-    filename="file_scan.log",
-    level=logging.INFO,
+    filename="file_scan.log",  # Log file name
+    level=logging.DEBUG,       # Set logging level to DEBUG
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
@@ -53,15 +53,17 @@ SAVE_INTERVAL = 10  # Save progress every 10 files
 # DEFAULT_FILE_EXTENSIONS = {".svg", ".ai", ".eps", ".psd", ".indd", ".xd", ".fig"}
 # DEFAULT_FILE_EXTENSIONS = {".ttf", ".otf", ".woff", ".woff2", ".eot", ".svgz"}
 # DEFAULT_FILE_EXTENSIONS = {".yaml", ".yml", ".ini", ".cfg"}
-DEFAULT_FILE_EXTENSIONS = {#".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp",
-                        #".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg",
-                        ".txt", ".log", ".md", ".csv", ".json", ".xml", ".html", ".css",
-                        ".js", ".doc", ".docx", ".pdf", ".ppt", ".pptx", ".xls", ".xlsx",
-                        ".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z",
-                        ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma",
-                        ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".img",
-                        ".py", ".java", ".c", ".cpp", ".h", ".cs", ".go", ".rb"
-                        }  # Default file types to include
+DEFAULT_FILE_EXTENSIONS = {
+        ".txt", ".log", ".md", ".csv", ".json", ".xml", ".html", ".css", ".js",
+        ".doc", ".docx", ".pdf", ".ppt", ".pptx", ".xls", ".xlsx",
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp",
+        ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma",
+        ".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpg", ".mpeg",
+        ".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z",
+        ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".img",
+        ".py", ".java", ".c", ".cpp", ".h", ".cs", ".go", ".rb",
+        ".stl", ".obj", ".gcode"  # Add 3D printing file extensions
+        }  # Default file types to include
 
 # Create output folders if they don't exist
 if not os.path.exists(UNIQUE_DIR):
@@ -105,6 +107,11 @@ def parse_arguments():
         "--dry-run",
         action="store_true",
         help="Run the script without copying files or modifying the database."
+    )
+    parser.add_argument(
+        "--clear-hashes",
+        action="store_true",
+        help="Clear the hash database and progress file before starting."
     )
     return parser.parse_args()
 
@@ -168,10 +175,13 @@ def is_valid_file(filename, extensions):
     ext = os.path.splitext(filename.lower())[1]
     if ext in extensions:
         return True
-    
-    # Check MIME type if extension is not found
-    mime_type, _ = mimetypes.guess_type(filename)
-    return mime_type and any(mime_type.endswith(ext.strip(".")) for ext in extensions)
+
+    # Allow files without extensions or with unknown extensions
+    if not ext:  # Files without extensions
+        return True
+
+    # Allow files with unknown extensions
+    return True
 
 
 def safe_copy(src, dest_dir, hashes, delete_original=False):
@@ -469,6 +479,7 @@ def organize_unique_files_by_group(unique_dir):
         "Executables": {".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".img"},
         "Code": {".py", ".java", ".c", ".cpp", ".h", ".cs", ".go", ".rb"},
         "Fonts": {".ttf", ".otf", ".woff", ".woff2", ".eot", ".svgz"},
+        "3DPrinting": {".stl", ".obj", ".gcode"},
         "Other": set()  # Catch-all for files that don't match any group
     }
 
@@ -476,8 +487,10 @@ def organize_unique_files_by_group(unique_dir):
     for filename in os.listdir(unique_dir):
         file_path = os.path.join(unique_dir, filename)
         if os.path.isfile(file_path):
-            ext = os.path.splitext(filename)[1].lower()
+            ext = os.path.splitext(filename)[1].lower()  # Get the file extension
             group = "Other"  # Default group
+
+            logging.debug(f"Processing file: {filename} with extension: {ext}")
 
             # Find the group for the file extension
             for group_name, extensions in file_type_groups.items():
@@ -490,13 +503,48 @@ def organize_unique_files_by_group(unique_dir):
             os.makedirs(group_dir, exist_ok=True)
 
             # Move the file into the group directory
-            shutil.move(file_path, os.path.join(group_dir, filename))
-            logging.info(f"Moved {filename} to {group_dir}")
+            try:
+                shutil.move(file_path, os.path.join(group_dir, filename))
+                logging.info(f"Moved {filename} to {group_dir}")
+            except Exception as e:
+                logging.error(f"Error moving {filename} to {group_dir}: {e}")
+        else:
+            logging.warning(f"Skipping non-file item: {filename}")
+
+
+def clear_hash_storage(db_path="hashes.db", progress_file="hashes.pkl"):
+    """
+    Clears the hash database and progress file.
+
+    Args:
+        db_path (str): Path to the SQLite database file.
+        progress_file (str): Path to the progress file.
+    """
+    # Remove the database file
+    if os.path.exists(db_path):
+        os.remove(db_path)
+        logging.info(f"Deleted database file: {db_path}")
+    else:
+        logging.info(f"No database file found to delete: {db_path}")
+
+    # Remove the progress file
+    if os.path.exists(progress_file):
+        os.remove(progress_file)
+        logging.info(f"Deleted progress file: {progress_file}")
+    else:
+        logging.info(f"No progress file found to delete: {progress_file}")
 
 
 if __name__ == "__main__":
     # Parse command-line arguments
     args = parse_arguments()
+
+    # Clear hash storage every time
+    # clear_hash_storage()
+    
+    # Clear hash storage if requested
+    if args.clear_hashes:
+        clear_hash_storage()
 
     # Update global variables based on user input
     ROOT_DIR = args.root_dir
